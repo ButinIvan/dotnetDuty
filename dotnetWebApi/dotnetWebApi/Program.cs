@@ -1,27 +1,18 @@
-using Amazon;
-using Amazon.Runtime;
-using Amazon.S3;
-using dotnetWebApi.Data;
+using BusinessLogic;
+using dotnetWebApi.Repositories;
+using dotnetWebApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-var awsOptions = builder.Configuration.GetSection("AWS");
-var credentials = new BasicAWSCredentials(awsOptions["AccessKey"], awsOptions["SecretKey"]);
-var config = new AmazonS3Config
-{
-    ServiceURL = "https://s3.yandexcloud.net",
-    ForcePathStyle = true,
-    
-};
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddSingleton<IAmazonS3>(new AmazonS3Client(credentials, config));
-builder.Services.AddSingleton<S3DocumentService>();
-//builder.Services.AddAWSService<IAmazonS3>();
-//builder.Services.AddSingleton<S3DocumentService>();
-
+builder.Services.AddScoped<AccountRepository>();
+builder.Services.AddScoped<AccountService>();
+builder.Services.AddScoped<AuthService>();
+builder.Services.Configure<AuthSettings>(
+    builder.Configuration.GetSection("AuthSettings"));
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -33,6 +24,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

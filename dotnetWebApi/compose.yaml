@@ -1,0 +1,12 @@
+﻿services:
+  dotnetWebApi:
+    image: dotnetwebapi
+    build:
+      context: .
+      dockerfile: dotnetWebApi/Dockerfile
+
+  dotnetwebapi:
+    image: dotnetwebapi
+    build:
+      context: .
+      dockerfile: dotnetWebApi/Dockerfile
