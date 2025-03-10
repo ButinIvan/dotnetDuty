@@ -1,7 +1,6 @@
 ﻿using dotnetWebApi.Entities;
-using dotnetWebApi.Models;
 
-namespace dotnetWebApi.Repositories;
+namespace dotnetWebApi.AuthUsers.Repositories;
 
 public class AccountRepository
 {

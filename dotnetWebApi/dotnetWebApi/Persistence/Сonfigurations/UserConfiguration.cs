@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Persistence.Сonfigurations;
+namespace dotnetWebApi.Persistence.Сonfigurations;
 
 public class UserConfiguration : IEntityTypeConfiguration<User>
 {
@@ -24,6 +24,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired();
 
         builder.HasMany(u => u.ReviewDocuments)
-            .WithMany(d => d.Reviewer);
+            .WithMany(d => d.Reviewers);
     }
 }

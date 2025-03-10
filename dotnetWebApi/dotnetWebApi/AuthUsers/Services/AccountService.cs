@@ -1,8 +1,8 @@
-﻿using dotnetWebApi.Entities;
-using dotnetWebApi.Repositories;
+﻿using dotnetWebApi.AuthUsers.Repositories;
+using dotnetWebApi.Entities;
 using Microsoft.AspNetCore.Identity;
 
-namespace dotnetWebApi.Services;
+namespace dotnetWebApi.AuthUsers.Services;
 
 public class AccountService(AccountRepository accountRepository)
 {

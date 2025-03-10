@@ -1,12 +1,47 @@
 ﻿services:
+  db:
+    image: postgres:latest
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    
+    
   dotnetWebApi:
     image: dotnetwebapi
     build:
       context: .
       dockerfile: dotnetWebApi/Dockerfile
-
-  dotnetwebapi:
-    image: dotnetwebapi
-    build:
-      context: .
-      dockerfile: dotnetWebApi/Dockerfile
+    container_name: webApi
+    restart: always
+    depends_on:
+      - db
+      - minio
+    environment:
+      CONNECTION_STRING: "Host=localhost;Port=5432;Database=${DB_NAME};Username=${DB_USERNAME};Password=${DB_PASSWORD}"
+      ISSUER: "https://localhost"
+      AUDIENCE: "local-client"
+      SECRETKEY: ${SECRET_KEY}
+      MINIO_ENDPOINT: "minio:9000"
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+    ports:
+      - "8080:8080"
+  
+  minio:
+    image: quay.io/minio/minio
+    container_name: minio
+    restart: always
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
