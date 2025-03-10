@@ -62,8 +62,7 @@ public class ApplicationDbContext : DbContext
                 .HasForeignKey(d => d.OwnerId)
                 .OnDelete(DeleteBehavior.Restrict); // Запретить удаление пользователя, если есть документы
 
-            // Настройка Reviewer (проверяющие)
-            entity.Property(e => e.Reviewers).IsRequired(); // Если нужно, чтобы Reviewer был не null
+            entity.HasMany(d => d.Reviewers).WithMany(d => d.ReviewDocuments);
         });
     }
 }
