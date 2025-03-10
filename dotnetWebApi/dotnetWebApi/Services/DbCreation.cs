@@ -13,24 +13,37 @@ public class DbCreation
     
     public async Task EnsureDatabaseExistsAsync()
     {
-        var defaultConnectionString = new NpgsqlConnectionStringBuilder(_connectionString)
-        {
-            Database = "dotnetDuty"
-        }.ConnectionString;
+        var defaultConnectionString = new NpgsqlConnectionStringBuilder(_connectionString).ConnectionString;
 
         var targetDbName = new NpgsqlConnectionStringBuilder(_connectionString).Database;
+        
+        Console.WriteLine($"Default Connection String: {defaultConnectionString}");
+        Console.WriteLine($"Target Database: {targetDbName}");
 
-        using var connection = new NpgsqlConnection(defaultConnectionString);
-        await connection.OpenAsync();
-
-        using var command = connection.CreateCommand();
-        command.CommandText = $"SELECT 1 FROM pg_database WHERE datname = '{targetDbName}';";
-        var dbExists = await command.ExecuteScalarAsync() != null;
-
-        if (!dbExists)
+        try
         {
-            command.CommandText = $"CREATE DATABASE \"{targetDbName}\";";
-            await command.ExecuteNonQueryAsync();
+            using var connection = new NpgsqlConnection(defaultConnectionString);
+            await connection.OpenAsync();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = $"SELECT 1 FROM pg_database WHERE datname = '{targetDbName}';";
+            var dbExists = await command.ExecuteScalarAsync() != null;
+
+            if (!dbExists)
+            {
+                command.CommandText = $"CREATE DATABASE \"{targetDbName}\";";
+                await command.ExecuteNonQueryAsync();
+                Console.WriteLine($"Database '{targetDbName}' created.");
+            }
+            else
+            {
+                Console.WriteLine($"Database '{targetDbName}' already exists.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            throw; // Повторно выбрасываем исключение для диагностики
         }
     }
 }

@@ -7,31 +7,11 @@
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
-    
-    
-  dotnetWebApi:
-    image: dotnetwebapi
-    build:
-      context: .
-      dockerfile: dotnetWebApi/Dockerfile
-    container_name: webApi
-    restart: always
-    depends_on:
-      - db
-      - minio
-    environment:
-      CONNECTION_STRING: "Host=localhost;Port=5432;Database=${DB_NAME};Username=${DB_USERNAME};Password=${DB_PASSWORD}"
-      ISSUER: "https://localhost"
-      AUDIENCE: "local-client"
-      SECRETKEY: ${SECRET_KEY}
-      MINIO_ENDPOINT: "minio:9000"
-      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
-      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
-    ports:
-      - "8080:8080"
-  
+
   minio:
     image: quay.io/minio/minio
     container_name: minio
@@ -44,4 +24,30 @@
       - "9001:9001"
     command: server /data --console-address ":9001"
     volumes:
-      - minio-data:/data
+      - minio_data:/data
+    
+  dotnetWebApi:
+    image: dotnetwebapi
+    build:
+      context: .
+      dockerfile: dotnetWebApi/Dockerfile
+    container_name: webApi
+    restart: always
+    depends_on:
+      - db
+      - minio
+    environment:
+      ASPNETCORE_URLS: "https://*:5100"
+      CONNECTION_STRING: "Host=db;Port=5432;Database=${DB_NAME};Username=${DB_USERNAME};Password=${DB_PASSWORD}"
+      ISSUER: "https://localhost"
+      AUDIENCE: "local-client"
+      SECRETKEY: ${SECRET_KEY}
+      MINIO_ENDPOINT: "minio:9000"
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+    ports:
+      - "5100:5100"
+  
+volumes:
+  db_data:
+  minio_data:
