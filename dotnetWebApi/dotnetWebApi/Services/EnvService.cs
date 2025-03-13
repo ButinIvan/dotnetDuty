@@ -4,6 +4,11 @@ public class EnvService
 {
     public string GetVariable(string envItem, string defaultValue = "")
     {
-        return Environment.GetEnvironmentVariable(envItem) ?? defaultValue;
+        var value = Environment.GetEnvironmentVariable(envItem);
+        if (string.IsNullOrEmpty(value))
+        {
+            Console.WriteLine($"⚠️  Warning: Environment variable '{envItem}' is not set or empty.");
+        }
+        return value ?? defaultValue;
     }
 }

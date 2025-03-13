@@ -1,4 +1,4 @@
-﻿namespace dotnetWebApi.Auth;
+﻿namespace dotnetWebApi.AuthUsers;
 
 public class AuthSettings
 {

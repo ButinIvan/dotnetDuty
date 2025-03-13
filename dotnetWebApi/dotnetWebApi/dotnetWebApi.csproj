@@ -8,13 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="AWSSDK.Core" Version="4.0.0-preview.8" />
-        <PackageReference Include="AWSSDK.DynamoDBv2" Version="4.0.0-preview.8" />
-        <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.0-preview.7" />
-        <PackageReference Include="AWSSDK.Lambda" Version="4.0.0-preview.8" />
-        <PackageReference Include="AWSSDK.S3" Version="4.0.0-preview.7" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.2" />
-        <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.3.0" />
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.2" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.2">
           <PrivateAssets>all</PrivateAssets>
@@ -26,7 +20,6 @@
         </PackageReference>
         <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.7" />
         <PackageReference Include="Minio" Version="6.0.4" />
-        <PackageReference Include="MongoDB.Driver" Version="3.2.1" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     </ItemGroup>

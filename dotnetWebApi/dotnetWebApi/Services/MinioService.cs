@@ -1,7 +1,4 @@
 ﻿using System.Text;
-using Amazon.S3;
-using Amazon.S3.Model;
-using dotnetWebApi.Entities;
 using Minio;
 using Minio.DataModel.Args;
 
@@ -31,7 +28,7 @@ public class MinioService
         }
     }
 
-    public async Task<string> UploadDocumentAsync(Guid userId, string content)
+    public async Task<string> UploadDocumentAsync(Guid userId, string content, string bucketName)
     {
         await EnsureBucketExistsAsync();
 

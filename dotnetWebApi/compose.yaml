@@ -37,17 +37,20 @@
       - db
       - minio
     environment:
-      ASPNETCORE_URLS: "https://*:5100"
       CONNECTION_STRING: "Host=db;Port=5432;Database=${DB_NAME};Username=${DB_USERNAME};Password=${DB_PASSWORD}"
       ISSUER: "https://localhost"
       AUDIENCE: "local-client"
       SECRETKEY: ${SECRET_KEY}
-      MINIO_ENDPOINT: "minio:9000"
+      MINIO_ENDPOINT: "minio:9001"
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
-    ports:
+    ports:  
       - "5100:5100"
+      - "5101:5101"
+    volumes:
+      - data_protection_keys:/app/keys
   
 volumes:
   db_data:
   minio_data:
+  data_protection_keys:

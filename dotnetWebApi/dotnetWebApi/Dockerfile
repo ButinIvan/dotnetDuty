@@ -1,21 +1,20 @@
-﻿FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
-WORKDIR /app
-EXPOSE 5100
-
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
-ARG BUILD_CONFIGURATION=Release
+﻿FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
+
 COPY ["dotnetWebApi/dotnetWebApi.csproj", "dotnetWebApi/"]
 RUN dotnet restore "dotnetWebApi/dotnetWebApi.csproj"
+
 COPY . .
+
 WORKDIR "/src/dotnetWebApi"
-RUN dotnet build "dotnetWebApi.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-FROM build AS publish
+
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "dotnetWebApi.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "dotnetWebApi.csproj" -c $BUILD_CONFIGURATION -o /app/publish 
 
-FROM base AS final
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=build /app/publish .
+
+EXPOSE 5099
 ENTRYPOINT ["dotnet", "dotnetWebApi.dll"]

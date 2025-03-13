@@ -13,6 +13,13 @@ public class DbCreation
     
     public async Task EnsureDatabaseExistsAsync()
     {
+        Console.WriteLine("⏳ Checking environment variables...");
+        foreach (var envVar in Environment.GetEnvironmentVariables().Keys)
+        {
+            Console.WriteLine($"{envVar}: {Environment.GetEnvironmentVariable(envVar.ToString())}");
+        }
+        Console.WriteLine("✅ Environment variables loaded.");
+
         var defaultConnectionString = new NpgsqlConnectionStringBuilder(_connectionString).ConnectionString;
 
         var targetDbName = new NpgsqlConnectionStringBuilder(_connectionString).Database;

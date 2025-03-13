@@ -23,7 +23,7 @@ public class Document
         Title = title;
         OwnerId = ownerId;
         IsFinished = false;
-        IsClosedToComment = false;
+        IsClosedToComment = true;
         LastEdited = DateTime.UtcNow;
         S3Path = s3Path;
     }

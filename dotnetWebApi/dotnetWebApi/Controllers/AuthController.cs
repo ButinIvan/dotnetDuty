@@ -1,4 +1,4 @@
-using dotnetWebApi.Auth;
+using dotnetWebApi.AuthUsers;
 using dotnetWebApi.AuthUsers.Services;
 using dotnetWebApi.Models;
 using dotnetWebApi.Services;
