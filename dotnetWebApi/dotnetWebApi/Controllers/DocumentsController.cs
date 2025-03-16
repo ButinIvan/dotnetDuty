@@ -25,7 +25,7 @@ public class DocumentsController : ControllerBase
     {
         var userId = this.GetUserId();
         
-        await _s3Service.UploadDocumentAsync(userId, request.Content, "dotnet-duty-bucket");
+        await _s3Service.UploadDocumentAsync(userId, request.Content);
         return Ok("Document is created");
     }
 }

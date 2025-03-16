@@ -1,5 +1,4 @@
 ﻿using dotnetWebApi.Entities;
-using dotnetWebApi.Persistence.Сonfigurations;
 using Microsoft.EntityFrameworkCore;
 
 namespace dotnetWebApi.Persistence;
@@ -10,8 +9,8 @@ public class ApplicationDbContext : DbContext
         : base(options) { }
 
     public DbSet<User> Users { get; set; }
-
     public DbSet<Document> Documents { get; set; }
+    public DbSet<Reviewer> Reviewers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -41,8 +40,7 @@ public class ApplicationDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Связь: User -> ReviewDocuments (многие ко многим)
-            entity.HasMany(u => u.ReviewDocuments)
-                .WithMany(d => d.Reviewers);
+            entity.HasMany(u => u.ReviewDocuments);
         });
 
         // Конфигурация для Document
@@ -54,15 +52,32 @@ public class ApplicationDbContext : DbContext
 
             // Обязательные поля
             entity.Property(d => d.Title).IsRequired();
-            entity.Property(d => d.LastEdited).HasDefaultValueSql("CURRENT_TIMESTAMP"); // Если это DateTime, используйте CURRENT_TIMESTAMP
+            entity.Property(d => d.LastEdited).HasDefaultValueSql("CURRENT_TIMESTAMP"); 
 
             // Внешний ключ для владельца
             entity.HasOne(d => d.Owner)
-                .WithMany(u => u.Documents)
+                .WithMany()
                 .HasForeignKey(d => d.OwnerId)
                 .OnDelete(DeleteBehavior.Restrict); // Запретить удаление пользователя, если есть документы
 
-            entity.HasMany(d => d.Reviewers).WithMany(d => d.ReviewDocuments);
+            entity.HasMany(d => d.Reviewers);
+        });
+        
+        modelBuilder.Entity<Reviewer>(entity =>
+        {
+            entity.ToTable("Reviewers");
+            entity.HasKey(d => d.Id);
+            entity.Property(d => d.Id).HasDefaultValueSql("gen_random_uuid()");
+
+            entity.HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Document)
+                .WithMany(x => x.Reviewers)
+                .HasForeignKey(x => x.DocumentId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

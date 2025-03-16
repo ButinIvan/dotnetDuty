@@ -1,10 +1,11 @@
 ﻿using System.Text;
+using dotnetWebApi.Interfaces;
 using Minio;
 using Minio.DataModel.Args;
 
 namespace dotnetWebApi.Services;
 
-public class MinioService
+public class MinioService :IS3Repository
 {
 
     private readonly IMinioClient _minioClient;
@@ -28,7 +29,7 @@ public class MinioService
         }
     }
 
-    public async Task<string> UploadDocumentAsync(Guid userId, string content, string bucketName)
+    public async Task<string> UploadDocumentAsync(Guid userId, string content)
     {
         await EnsureBucketExistsAsync();
 
@@ -46,5 +47,25 @@ public class MinioService
             .WithContentType("text/plain");
         await _minioClient.PutObjectAsync(args);
         return objectName;
+    }
+
+    public Task<string?> GetDocumentAsync(Guid userId, string documentName)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<string> DownloadDocumentAsync(string s3Path)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task DeleteDocumentAsync(Guid userId, string documentName)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task DeleteDocumentAsync(string s3Path)
+    {
+        throw new NotImplementedException();
     }
 }

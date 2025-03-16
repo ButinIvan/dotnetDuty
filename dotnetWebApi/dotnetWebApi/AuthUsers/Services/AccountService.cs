@@ -8,7 +8,7 @@ public class AccountService(AccountRepository accountRepository)
 {
     public async Task<(bool success, string message)> RegisterAsync(string userName, string firstName, string password)
     {
-        var existingUser = await accountRepository.GetByUserName(userName);
+        var existingUser = await accountRepository.GetByUserNameAsync(userName);
         if (existingUser != null) return (false, "User with such username is already exists");
         var user = new User
         {
@@ -24,7 +24,7 @@ public class AccountService(AccountRepository accountRepository)
 
     public async Task<(bool success, string message, User? user)> LoginAsync(string userName, string password)
     {
-        var user = await accountRepository.GetByUserName(userName);
+        var user = await accountRepository.GetByUserNameAsync(userName);
         if (user == null) return (false, "Invalid username or/and password", null);
         var passwordVerification = new PasswordHasher<User>().VerifyHashedPassword(user, user.PasswordHash, password);
         return passwordVerification == PasswordVerificationResult.Success

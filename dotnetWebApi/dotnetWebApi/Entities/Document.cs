@@ -11,9 +11,9 @@ public class Document
     public string S3Path { get; private set; }
     
     public User Owner { get; private set; }
-    public ICollection<User> Reviewers { get; private set; } = new List<User>();
+    public ICollection<Reviewer> Reviewers { get; private set; } = new List<Reviewer>();
 
-    public Document()
+    private Document()
     {
     }
 
@@ -28,9 +28,9 @@ public class Document
         S3Path = s3Path;
     }
     
-    public void UpdateS3Path(string newS3Path)
+    public void UpdateTitle(string title)
     {
-        S3Path = newS3Path;
+        Title = title;
         LastEdited = DateTime.UtcNow;
     }
 
@@ -39,13 +39,8 @@ public class Document
         LastEdited = DateTime.UtcNow;
     }
 
-    public void SetFinished()
+    public void SetFinished(bool isFinished)
     {
-        IsFinished = true;
-    }
-
-    public void ClosedToComment()
-    {
-        IsClosedToComment = true;
+        IsFinished = isFinished;
     }
 }

@@ -77,8 +77,8 @@ builder.Services.AddScoped<MinioService>(options =>
 {
     var envvService = options.GetRequiredService<EnvService>();
     var endpoint = envvService.GetVariable("MINIO_ENDPOINT", "localhost:9001");
-    var accessKey = envvService.GetVariable("MINIO_ACCESS_KEY", "admin");
-    var secretKey = envvService.GetVariable("MINIO_SECRET_KEY", "admin123");
+    var accessKey = envvService.GetVariable("MINIO_ACCESS_KEY", "minioadmin");
+    var secretKey = envvService.GetVariable("MINIO_SECRET_KEY", "minioadmin");
 
     return new MinioService(endpoint, accessKey, secretKey);
 });
