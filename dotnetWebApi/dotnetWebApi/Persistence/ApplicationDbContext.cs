@@ -39,8 +39,6 @@ public class ApplicationDbContext : DbContext
                 .HasForeignKey(d => d.OwnerId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Связь: User -> ReviewDocuments (многие ко многим)
-            entity.HasMany(u => u.ReviewDocuments);
         });
 
         // Конфигурация для Document
@@ -53,14 +51,6 @@ public class ApplicationDbContext : DbContext
             // Обязательные поля
             entity.Property(d => d.Title).IsRequired();
             entity.Property(d => d.LastEdited).HasDefaultValueSql("CURRENT_TIMESTAMP"); 
-
-            // Внешний ключ для владельца
-            entity.HasOne(d => d.Owner)
-                .WithMany()
-                .HasForeignKey(d => d.OwnerId)
-                .OnDelete(DeleteBehavior.Restrict); // Запретить удаление пользователя, если есть документы
-
-            entity.HasMany(d => d.Reviewers);
         });
         
         modelBuilder.Entity<Reviewer>(entity =>

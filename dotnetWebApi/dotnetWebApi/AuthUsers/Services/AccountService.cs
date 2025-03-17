@@ -1,10 +1,10 @@
-﻿using dotnetWebApi.AuthUsers.Repositories;
-using dotnetWebApi.Entities;
+﻿using dotnetWebApi.Entities;
+using dotnetWebApi.Interfaces;
 using Microsoft.AspNetCore.Identity;
 
 namespace dotnetWebApi.AuthUsers.Services;
 
-public class AccountService(AccountRepository accountRepository)
+public class AccountService(IAccountRepository accountRepository)
 {
     public async Task<(bool success, string message)> RegisterAsync(string userName, string firstName, string password)
     {
@@ -14,7 +14,7 @@ public class AccountService(AccountRepository accountRepository)
         {
             UserName = userName,
             FirstName = firstName,
-            Role = "Visitor"
+            Role = "Viewer"
         };
         var passHash = new PasswordHasher<User>().HashPassword(user, password);
         user.PasswordHash = passHash;

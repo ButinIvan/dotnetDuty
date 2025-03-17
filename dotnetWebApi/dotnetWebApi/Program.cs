@@ -1,6 +1,8 @@
 using System.Text;
 using dotnetWebApi.AuthUsers.Repositories;
 using dotnetWebApi.AuthUsers.Services;
+using dotnetWebApi.Documents.Repositories;
+using dotnetWebApi.Interfaces;
 using dotnetWebApi.Persistence;
 using dotnetWebApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -30,8 +32,11 @@ await dbInitializer.EnsureDatabaseExistsAsync();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddScoped<AccountRepository>();
+
+builder.Services.AddScoped<IAccountRepository, AccountRepository>();
+builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 builder.Services.AddScoped<AccountService>();
+
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer(options =>
     {
@@ -73,7 +78,7 @@ builder.Services.AddSingleton<AuthService>(o =>
 var connectionString = envService.GetVariable("CONNECTION_STRING");
 builder.Services.AddDbContext<ApplicationDbContext>(o => o.UseNpgsql(connectionString));
 
-builder.Services.AddScoped<MinioService>(options =>
+builder.Services.AddScoped<IS3Repository>(options =>
 {
     var envvService = options.GetRequiredService<EnvService>();
     var endpoint = envvService.GetVariable("MINIO_ENDPOINT", "localhost:9001");
@@ -84,6 +89,12 @@ builder.Services.AddScoped<MinioService>(options =>
 });
     
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await dbContext.Database.MigrateAsync(); 
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
