@@ -33,8 +33,8 @@ public class MinioService :IS3Repository
     {
         await EnsureBucketExistsAsync();
 
-        string fileName = $"{Guid.NewGuid()}.txt";
-        string objectName = $"{userId}/{fileName}";
+        string documentName = $"{Guid.NewGuid()}.txt";
+        string objectName = $"{userId}/{documentName}";
 
         byte[] data = Encoding.UTF8.GetBytes(content);
         using var stream = new MemoryStream(data);
@@ -49,23 +49,49 @@ public class MinioService :IS3Repository
         return objectName;
     }
 
-    public Task<string?> GetDocumentAsync(Guid userId, string documentName)
+    public async Task<string?> GetDocumentAsync(Guid userId, string documentName)
     {
-        throw new NotImplementedException();
+        var objectName = $"{userId}/{documentName}";
+        using var memoryStream = new MemoryStream();
+        var args = new GetObjectArgs()
+            .WithBucket(_bucketName)
+            .WithObject(objectName)
+            .WithCallbackStream(async stream =>
+            {
+                await stream.CopyToAsync(memoryStream);
+                memoryStream.Seek(0, SeekOrigin.Begin);
+            });
+        await _minioClient.GetObjectAsync(args);
+        return Encoding.UTF8.GetString(memoryStream.ToArray());
     }
 
-    public Task<string> DownloadDocumentAsync(string s3Path)
+    public async Task<string> DownloadDocumentAsync(string s3Path)
     {
-        throw new NotImplementedException();
+        using var memoryStream = new MemoryStream();
+        await _minioClient.GetObjectAsync(new GetObjectArgs()
+            .WithBucket(_bucketName)
+            .WithObject(s3Path)
+            .WithCallbackStream(stream => stream.CopyToAsync(stream)));
+        
+        memoryStream.Seek(0, SeekOrigin.Begin);
+        return Encoding.UTF8.GetString(memoryStream.ToArray());
     }
 
-    public Task DeleteDocumentAsync(Guid userId, string documentName)
+    public async Task DeleteDocumentAsync(Guid userId, string documentName)
     {
-        throw new NotImplementedException();
+        var objectName = $"{userId}/{documentName}";
+        var args = new RemoveObjectArgs()
+            .WithBucket(_bucketName)
+            .WithObject(objectName);
+        await _minioClient.RemoveObjectAsync(args);
     }
 
-    public Task DeleteDocumentAsync(string s3Path)
+    public async Task DeleteDocumentAsync(string s3Path)
     {
-        throw new NotImplementedException();
+        var objectName = $"{s3Path}";
+        var args = new RemoveObjectArgs()
+            .WithBucket(_bucketName)
+            .WithObject(objectName);
+        await _minioClient.RemoveObjectAsync(args);
     }
 }

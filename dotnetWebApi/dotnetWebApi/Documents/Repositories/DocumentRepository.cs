@@ -14,28 +14,28 @@ public class DocumentRepository(ApplicationDbContext dbContext) :IDocumentReposi
         return _dbContext.Documents.FirstOrDefaultAsync(x => x.Id == id);
     }
 
-    public async Task<string?> GetUserRoleAsync(Guid documentId, Guid userId)
+    public async Task<string?> GetUserRoleAsync(Guid documentId, Guid ownerId)
     {
         var reviewer =
-            await _dbContext.Reviewers.FirstOrDefaultAsync(x => x.DocumentId == documentId && x.UserId == userId);
+            await _dbContext.Reviewers.FirstOrDefaultAsync(x => x.DocumentId == documentId && x.OwnerId == ownerId);
         return reviewer?.Role;
     }
 
-    public async Task AddReviewerAsync(Guid documentId, Guid userId, string role)
+    public async Task AddReviewerAsync(Guid documentId, Guid ownerId, string role)
     {
-        var reviewer = new Reviewer(documentId, userId, role);
+        var reviewer = new Reviewer(documentId, ownerId, role);
         await _dbContext.Reviewers.AddAsync(reviewer);
         await _dbContext.SaveChangesAsync();
     }
 
-    public async Task<bool> IsReviewerAsync(Guid documentId, Guid userId)
+    public async Task<bool> IsReviewerAsync(Guid documentId, Guid ownerId)
     {
-        return await _dbContext.Reviewers.AnyAsync(x => x.DocumentId == documentId && x.UserId == userId);
+        return await _dbContext.Reviewers.AnyAsync(x => x.DocumentId == documentId && x.OwnerId == ownerId);
     }
 
-    public async Task<Reviewer?> GetReviewerAsync(Guid documentId, Guid userId)
+    public async Task<Reviewer?> GetReviewerAsync(Guid documentId, Guid ownerId)
     {
-        return await _dbContext.Reviewers.FirstOrDefaultAsync(x => x.DocumentId == documentId && x.UserId == userId);
+        return await _dbContext.Reviewers.FirstOrDefaultAsync(x => x.DocumentId == documentId && x.OwnerId == ownerId);
     }
 
     public async Task<List<Reviewer>> GetReviewersAsync(Guid documentId)
