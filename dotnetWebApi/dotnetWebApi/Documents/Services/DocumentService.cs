@@ -40,7 +40,7 @@ public class DocumentService(IAccountRepository accountRepository, IDocumentRepo
         Guid userId)
     {
         var document = await _documentRepository.GetByIdAsync(documentId);
-        if (document == null) return (false, "Document not found", "", "No role");
+        if (document == null) return (false, "Document not found", "", "User");
 
         if (document.OwnerId == userId)
         {
@@ -50,7 +50,7 @@ public class DocumentService(IAccountRepository accountRepository, IDocumentRepo
 
         var reviewerRole = await _documentRepository.GetUserRoleAsync(documentId, userId);
 
-        if (reviewerRole == null) return (false, "Access denied", "", "No role");
+        if (reviewerRole == null) return (false, "Access denied", "", "User");
         {
             var content = await _s3Repository.DownloadDocumentAsync(document.S3Path);
             return (true, "Collaborator access granted.", content, reviewerRole);

@@ -1,4 +1,5 @@
 using System.Text;
+using dotnetWebApi.Documents.Services;
 using Microsoft.AspNetCore.Mvc;
 using dotnetWebApi.Extensions;
 using dotnetWebApi.Models;
@@ -11,13 +12,14 @@ namespace dotnetWebApi.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize]
 public class DocumentsController : ControllerBase
 {
-    private readonly MinioService _s3Service;
+    private readonly DocumentService _documentService;
 
-    public DocumentsController(MinioService s3Service)
+    public DocumentsController(DocumentService documentService)
     {
-        _s3Service = s3Service;
+        _documentService = documentService;
     }
 
     [HttpPost("Create")]
@@ -25,7 +27,17 @@ public class DocumentsController : ControllerBase
     {
         var userId = this.GetUserId();
         
-        await _s3Service.UploadDocumentAsync(userId, request.Content);
+        if (string.IsNullOrEmpty(request.Title)) return BadRequest(new {message = "Title is required"});
+        await _documentService.CreateDocumentAsync(userId, request.Title, request.Content);
         return Ok("Document is created");
+    }
+
+    [HttpGet("{documentId}")]
+    public async Task<IActionResult> GetDocument(Guid documentId)
+    {
+        var userId = this.GetUserId();
+        var (success, message, content, role) = await _documentService.GetDocumentAsync(userId, documentId);
+        if (!success) return BadRequest(message);
+        return Ok(new GetDocumentResponse { Content = content, Role = role });
     }
 }

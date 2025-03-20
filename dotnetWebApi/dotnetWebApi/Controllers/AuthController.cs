@@ -2,7 +2,6 @@ using dotnetWebApi.AuthUsers;
 using dotnetWebApi.AuthUsers.Models;
 using dotnetWebApi.AuthUsers.Services;
 using dotnetWebApi.Models;
-using dotnetWebApi.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
@@ -10,7 +9,7 @@ namespace dotnetWebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthController(AccountService accountService, AuthService authService, IOptions<AuthSettings> options) : ControllerBase
+    public class AuthController(AccountService accountService, AuthService authService) : ControllerBase
     {
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterUserRequest request)
@@ -46,15 +45,17 @@ namespace dotnetWebApi.Controllers
 
             var token = authService.GenerateToken(user.Id, user.UserName, user.Role);
             
+            Response.Headers.Append("Authorization", $"Bearer {token}");
+
             Response.Cookies.Append("AuthCookie", token, new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Strict,
-                Expires = DateTime.UtcNow.Add(options.Value.Expires)
+                Secure = false,
+                SameSite = SameSiteMode.Lax,
+                Expires = DateTime.UtcNow.AddHours(24)
             });
             
-            return Ok(new { message = "Login successful" });
+            return Ok(new { message = "Login successful", token });
         }
     }
 }

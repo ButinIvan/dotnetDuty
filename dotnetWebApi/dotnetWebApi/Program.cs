@@ -2,13 +2,19 @@ using System.Text;
 using dotnetWebApi.AuthUsers.Repositories;
 using dotnetWebApi.AuthUsers.Services;
 using dotnetWebApi.Documents.Repositories;
+using dotnetWebApi.Documents.Services;
+using dotnetWebApi.Filters;
 using dotnetWebApi.Interfaces;
+using dotnetWebApi.Middlewares;
 using dotnetWebApi.Persistence;
 using dotnetWebApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.Swagger;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,15 +37,38 @@ await dbInitializer.EnsureDatabaseExistsAsync();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("CookieAuth", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Cookie,
+        Description = "Авторизация через куки (AuthCookie)",
+        Name = "Cookie",
+        Type = SecuritySchemeType.ApiKey
+    });
 
-builder.Services.AddScoped<IAccountRepository, AccountRepository>();
-builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
-builder.Services.AddScoped<AccountService>();
+    c.OperationFilter<ApplyCookieAuthentication>();
+});;
 
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer(options =>
     {
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                if (context.Request.Cookies.ContainsKey("AuthCookie"))
+                {
+                    context.Token = context.Request.Cookies["AuthCookie"];
+                    Console.WriteLine($"Токен из Cookie: {context.Token}");
+                }
+                else
+                {
+                    Console.WriteLine("Куки AuthCookie не найдены.");
+                }
+                return Task.CompletedTask;
+            }
+        };
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -51,20 +80,10 @@ builder.Services.AddAuthentication("Bearer")
             IssuerSigningKey =
                 new SymmetricSecurityKey(Encoding.UTF8.GetBytes(envService.GetVariable("SECRETKEY", "secretkey")))
         };
-
-        options.Events = new JwtBearerEvents
-        {
-            OnMessageReceived = context =>
-            {
-                if (context.Request.Cookies.ContainsKey("AuthCookie"))
-                {
-                    context.Token = context.Request.Cookies["AuthCookie"];
-                }
-
-                return Task.CompletedTask;
-            }
-        };
     });
+
+
+builder.Services.AddScoped<AccountService>();
 
 builder.Services.AddSingleton<AuthService>(o =>
 {
@@ -74,14 +93,17 @@ builder.Services.AddSingleton<AuthService>(o =>
     requiredService.GetVariable("AUDIENCE", "audience"),
     requiredService.GetVariable("SECRETKEY", "secretKey"));
 });
+builder.Services.AddScoped<DocumentService>();
 
 var connectionString = envService.GetVariable("CONNECTION_STRING");
 builder.Services.AddDbContext<ApplicationDbContext>(o => o.UseNpgsql(connectionString));
 
+builder.Services.AddScoped<IAccountRepository, AccountRepository>();
+builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 builder.Services.AddScoped<IS3Repository>(options =>
 {
     var envvService = options.GetRequiredService<EnvService>();
-    var endpoint = envvService.GetVariable("MINIO_ENDPOINT", "localhost:9001");
+    var endpoint = envvService.GetVariable("MINIO_ENDPOINT", "minio:9000");
     var accessKey = envvService.GetVariable("MINIO_ACCESS_KEY", "minioadmin");
     var secretKey = envvService.GetVariable("MINIO_SECRET_KEY", "minioadmin");
 
@@ -103,11 +125,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
+app.UseMiddleware<SwaggerAuthMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run();
+await app.RunAsync();
