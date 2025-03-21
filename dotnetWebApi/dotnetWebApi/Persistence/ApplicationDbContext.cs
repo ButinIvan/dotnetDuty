@@ -31,7 +31,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(u => u.Role).IsRequired();
             entity.Property(u => u.PasswordHash).IsRequired();
 
-            entity.HasMany(u => u.Documents)
+            entity.HasMany(u => u.OwnedDocuments)
                 .WithOne(d => d.Owner)
                 .HasForeignKey(d => d.OwnerId)
                 .OnDelete(DeleteBehavior.Cascade);
@@ -56,8 +56,8 @@ public class ApplicationDbContext : DbContext
             entity.Property(d => d.Id).HasDefaultValueSql("gen_random_uuid()");
 
             entity.HasOne(x => x.User)
-                .WithMany()
-                .HasForeignKey(x => x.OwnerId)
+                .WithMany(x => x.ReviewAssignments)
+                .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne(x => x.Document)
@@ -73,12 +73,12 @@ public class ApplicationDbContext : DbContext
             entity.Property(d => d.Id).HasDefaultValueSql("gen_random_uuid()");
             
             entity.HasOne(x => x.Document)
-                .WithMany()
+                .WithMany(x => x.Comments)
                 .HasForeignKey(x => x.DocumentId)
                 .OnDelete(DeleteBehavior.Restrict);
             
             entity.HasOne(x => x.Reviewer)
-                .WithMany()
+                .WithMany(x => x.Comments)
                 .HasForeignKey(x => x.ReviewerId)
                 .OnDelete(DeleteBehavior.Restrict);
         });

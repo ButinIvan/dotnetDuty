@@ -10,12 +10,7 @@ public class AccountService(IAccountRepository accountRepository)
     {
         var existingUser = await accountRepository.GetByUserNameAsync(userName);
         if (existingUser != null) return (false, "User with such username is already exists");
-        var user = new User
-        {
-            UserName = userName,
-            FirstName = firstName,
-            Role = "Viewer"
-        };
+        var user = new User(userName, firstName, "User");
         var passHash = new PasswordHasher<User>().HashPassword(user, password);
         user.PasswordHash = passHash;
         await accountRepository.AddAsync(user);

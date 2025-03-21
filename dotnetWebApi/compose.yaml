@@ -44,11 +44,15 @@
       MINIO_ENDPOINT: "minio:9000"
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      DOTNET_USE_POLLING_FILE_WATCHER: "1"
     ports:  
       - "5100:5100"
       - "5101:5101"
+      - "9229:9229"
     volumes:
       - data_protection_keys:/app/keys
+      - ./dotnetWebApi:/app # Монтируем код для live-отладки
+    command: [ "dotnet", "watch", "run", "--no-launch-profile", "--no-hot-reload", "--urls", "http://0.0.0.0:5100" ]
   
 volumes:
   db_data:

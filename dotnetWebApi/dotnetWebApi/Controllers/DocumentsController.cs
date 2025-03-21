@@ -36,8 +36,18 @@ public class DocumentsController : ControllerBase
     public async Task<IActionResult> GetDocument(Guid documentId)
     {
         var userId = this.GetUserId();
-        var (success, message, content, role) = await _documentService.GetDocumentAsync(userId, documentId);
+        var (success, message, content, role) = await _documentService.GetDocumentAsync(documentId, userId);
         if (!success) return BadRequest(message);
         return Ok(new GetDocumentResponse { Content = content, Role = role });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetUserDocuments()
+    {
+        var userId = this.GetUserId();
+        
+        var documents = _documentService.GetUserDocumentsAsync(userId);
+        
+        return Ok(documents);
     }
 }

@@ -18,9 +18,9 @@ public class Document
     {
     }
 
-    public Document(string title, Guid ownerId, string s3Path)
+    public Document(Guid id, string title, Guid ownerId, string s3Path)
     {
-        Id = Guid.NewGuid();
+        Id = id;
         Title = title;
         OwnerId = ownerId;
         IsFinished = false;
@@ -43,5 +43,22 @@ public class Document
     public void SetFinished(bool isFinished)
     {
         IsFinished = isFinished;
+    }
+    
+    public void UpdateS3Path(string newS3Path)
+    {
+        S3Path = newS3Path;
+        LastModified = DateTime.UtcNow;
+    }
+    
+    public void AddComment(Comment comment)
+    {
+        if (IsClosedToComment)
+        {
+            throw new InvalidOperationException("Комментарии к этому документу закрыты.");
+        }
+
+        Comments.Add(comment);
+        LastModified = DateTime.UtcNow;
     }
 }

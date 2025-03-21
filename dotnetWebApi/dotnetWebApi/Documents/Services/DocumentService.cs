@@ -16,8 +16,10 @@ public class DocumentService(IAccountRepository accountRepository, IDocumentRepo
         if (string.IsNullOrEmpty(title)) return (false, "Title can not be empty", null);
 
         var s3Path = await _s3Repository.UploadDocumentAsync(userId, content);
-
-        var document = new Document(title, userId, s3Path);
+        var documentName = s3Path.Split("/").Last().Split('.').First();
+        var documentId = Guid.Parse(documentName);
+        
+        var document = new Document(documentId, title, userId, s3Path);
         await _documentRepository.AddAsync(document);
 
         await _documentRepository.AddReviewerAsync(document.Id, userId, "Owner");
@@ -40,12 +42,13 @@ public class DocumentService(IAccountRepository accountRepository, IDocumentRepo
         Guid userId)
     {
         var document = await _documentRepository.GetByIdAsync(documentId);
+        Console.WriteLine("Can't get document");
         if (document == null) return (false, "Document not found", "", "User");
 
         if (document.OwnerId == userId)
         {
             var content = await _s3Repository.DownloadDocumentAsync(document.S3Path);
-            return (true, "Access granted", content, "Owner");
+            return (true, "Accessed on", content, "Owner");
         }
 
         var reviewerRole = await _documentRepository.GetUserRoleAsync(documentId, userId);
@@ -53,18 +56,18 @@ public class DocumentService(IAccountRepository accountRepository, IDocumentRepo
         if (reviewerRole == null) return (false, "Access denied", "", "User");
         {
             var content = await _s3Repository.DownloadDocumentAsync(document.S3Path);
-            return (true, "Collaborator access granted.", content, reviewerRole);
+            return (true, "Collaborator accessed on.", content, reviewerRole);
         }
     }
 
     public async Task<string> GetUserRoleAsync(Guid documentId, Guid userId)
     {
         var document = await _documentRepository.GetByIdAsync(documentId);
-        if (document == null) return "No role";
+        if (document == null) return "User";
 
         if (document.OwnerId == userId) return "Owner";
         var role = await _documentRepository.GetUserRoleAsync(documentId, userId);
-        return role ?? "No role";
+        return role ?? "User";
     }
 
     public async Task<(bool Success, object? NewReviewer, string Message)> AddReviewerAsync(Guid documentId,
@@ -106,5 +109,26 @@ public class DocumentService(IAccountRepository accountRepository, IDocumentRepo
         await _documentRepository.UpdateAsync(document);
 
         return (true, "Document updated");
+    }
+    
+    public async Task<(bool Success, string Message)> DeleteDocumentAsync(Guid documentId, Guid userId)
+    {
+        var document = await _documentRepository.GetByIdAsync(documentId);
+        if (document == null) return (false, "Document not found.");
+
+        if (document.OwnerId != userId) return (false, "Access denied.");
+
+        await _s3Repository.DeleteDocumentAsync(document.S3Path);
+
+        await _documentRepository.RemoveReviewersAsync(documentId);
+
+        await _documentRepository.DeleteAsync(documentId);
+
+        return (true, "Document deleted successfully.");
+    }
+
+    public async Task<List<Document>> GetUserDocumentsAsync(Guid userId)
+    {
+        return await _documentRepository.GetUserDocumentsAsync(userId);
     }
 }
