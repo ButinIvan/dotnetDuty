@@ -10,11 +10,9 @@ using dotnetWebApi.Persistence;
 using dotnetWebApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.Swagger;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +32,16 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
 
 var dbInitializer = new DbCreation(envService);
 await dbInitializer.EnsureDatabaseExistsAsync();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    });
+});
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -125,8 +133,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-//app.UseHttpsRedirection();
+//  app.UseHttpsRedirection();
 app.UseMiddleware<SwaggerAuthMiddleware>();
+app.UseRouting();
+app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();

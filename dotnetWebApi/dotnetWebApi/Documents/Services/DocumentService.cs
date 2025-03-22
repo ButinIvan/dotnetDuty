@@ -129,6 +129,7 @@ public class DocumentService(IAccountRepository accountRepository, IDocumentRepo
 
     public async Task<List<Document>> GetUserDocumentsAsync(Guid userId)
     {
-        return await _documentRepository.GetUserDocumentsAsync(userId);
+        var documents = await _documentRepository.GetUserDocumentsAsync(userId);
+        return documents;
     }
 }

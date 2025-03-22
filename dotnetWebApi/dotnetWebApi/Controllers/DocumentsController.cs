@@ -42,11 +42,11 @@ public class DocumentsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetUserDocuments()
+    public async Task<IActionResult> GetUserDocumentsAsync()
     {
         var userId = this.GetUserId();
         
-        var documents = _documentService.GetUserDocumentsAsync(userId);
+        var documents = await _documentService.GetUserDocumentsAsync(userId);
         
         return Ok(documents);
     }
