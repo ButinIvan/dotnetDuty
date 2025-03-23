@@ -1,12 +1,14 @@
 ﻿using dotnetWebApi.Documents.Models;
 using dotnetWebApi.Entities;
 using dotnetWebApi.Interfaces;
+using dotnetWebApi.Models;
 
 namespace dotnetWebApi.Documents.Services;
 
-public class DocumentService(IDocumentRepository documentRepository, IS3Repository s3Repository)
+public class DocumentService(IDocumentRepository documentRepository, IAccountRepository accountRepository, IS3Repository s3Repository)
 {
     private readonly IDocumentRepository _documentRepository = documentRepository;
+    private readonly IAccountRepository _accountRepository = accountRepository;
     private readonly IS3Repository _s3Repository = s3Repository;
 
     public async Task<(bool Success, string Message, Guid? DocumentId)> CreateDocumentAsync(Guid userId, string title,
@@ -109,5 +111,80 @@ public class DocumentService(IDocumentRepository documentRepository, IS3Reposito
     {
         var documents = await _documentRepository.GetUserDocumentsAsync(userId);
         return documents;
+    }
+
+    public async Task<(bool Success, object? NewReviewer, string Message)> AddReviewerAsync(Guid documentId,
+        Guid userId, string userName, string role = "Reviewer")
+    {
+        var document = await _documentRepository.GetByIdAsync(documentId);
+        if (document == null) return (false, null, "Document not found");
+ 
+        if (document.OwnerId != userId) return (false, null, "Access denied");
+ 
+        var user = await _accountRepository.GetByUserNameAsync(userName);
+        if (user == null) return (false, null, "User not found");
+        
+        var isReviewer = await _documentRepository.GetReviewerAsync(documentId, user.Id);
+        if (isReviewer != null) return (false, null, "User is already reviewer");
+        await _documentRepository.AddReviewerAsync(documentId, user.Id, role);
+        
+        var newReviewer = new Reviewer(documentId, user.Id, role);
+        return (true, newReviewer, "New reviewer has been added");
+    }
+
+    public async Task<(bool Success, string Message)> DeleteReviewerAsync(Guid documentId, Guid ownerId, Guid userId)
+    {
+        var document = await _documentRepository.GetByIdAsync(documentId);
+        if (document == null) return (false, "Access denied");
+        
+        if (document.OwnerId != ownerId) return (false, "Access denied");
+        
+        var reviewer = await _documentRepository.GetReviewerAsync(documentId, userId);
+        if (reviewer == null) return (false, "No such reviewer");
+        if (reviewer.UserId == ownerId) return (false, "You can not remove yourself");
+        
+        await _documentRepository.RemoveReviewerAsync(reviewer);
+        return (true, "Reviewer has been deleted");
+    }
+
+    public async Task<List<Reviewer>> GetAllReviewersAsync(Guid documentId)
+    {
+        var reviewers = await _documentRepository.GetAllReviewersAsync(documentId);
+        return reviewers;
+    }
+
+    public async Task<(bool Success, string Message)> AddCommentAsync(Guid documentId, Guid userId, string content)
+    {
+        var document = await _documentRepository.GetByIdAsync(documentId);
+        if (document == null) return (false, "Document not found");
+        
+        var s3Path = await _s3Repository.UploadDocumentAsync(userId, content);
+        
+        var isReviewer = await _documentRepository.IsReviewerAsync(documentId, userId);
+        if (document.OwnerId != userId && isReviewer != true) return (false, "Access denied");
+        var reviewer = await _documentRepository.GetReviewerAsync(documentId, userId);
+
+        var comment = new Comment(documentId, reviewer.Id, s3Path);
+        await _documentRepository.AddCommentAsync(comment);
+        return (true, "Comment has been added");
+    }
+
+    public async Task<List<Comment>> GetAllCommentsAsync(Guid documentId)
+    {
+        var comments = await _documentRepository.GetAllCommentsAsync(documentId);
+        return comments;
+    }
+
+    public async Task<(bool Success, string Message)> DeleteCommentAsync(Guid documentId, Guid userId, Guid commentId)
+    {
+        var document = await _documentRepository.GetByIdAsync(documentId);
+        if (document == null) return (false, "Document not found");
+        
+        if (document.OwnerId != userId) return (false, "Access denied");
+        
+        var comment = await _documentRepository.GetCommentByIdAsync(commentId);
+        if (comment == null) return (false, "Comment has been deleted");
+        await _documentRepository.DeleteCommentAsync(comment);
+        return (true, "Comment has been deleted");
     }
 }

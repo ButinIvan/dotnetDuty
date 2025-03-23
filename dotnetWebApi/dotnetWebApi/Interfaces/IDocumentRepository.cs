@@ -14,6 +14,13 @@ public interface IDocumentRepository
     Task<IEnumerable<Document>> GetByOwnerIdAsync(Guid ownerId);
     Task AddAsync(Document document);
     Task UpdateAsync(Document document);
+    Task RemoveReviewerAsync(Reviewer reviewer);
     Task RemoveReviewersAsync(Guid documentId);
     Task DeleteAsync(Guid documentId);
+    Task AddCommentAsync(Comment comment);
+    Task<List<Comment>> GetAllCommentsAsync(Guid documentId);
+    Task<List<Reviewer>> GetAllReviewersAsync(Guid documentId);
+    Task<Comment?> GetCommentAsync(Guid documentId, Guid reviewerId);
+    Task<Comment?> GetCommentByIdAsync(Guid commentId);
+    Task DeleteCommentAsync(Comment comment);
 }

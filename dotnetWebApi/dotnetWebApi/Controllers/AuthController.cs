@@ -55,7 +55,7 @@ namespace dotnetWebApi.Controllers
                 Expires = DateTime.UtcNow.AddHours(2)
             });
             
-            return Ok(new { message = "Login successful", token });
+            return Ok(new { message = "Login successful" });
         }
         
         [HttpPost("logout")]

@@ -1,5 +1,6 @@
 ﻿using dotnetWebApi.Entities;
 using dotnetWebApi.Interfaces;
+using dotnetWebApi.Models;
 using dotnetWebApi.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -38,9 +39,9 @@ public class DocumentRepository(ApplicationDbContext dbContext) :IDocumentReposi
         return await _dbContext.Reviewers.AnyAsync(x => x.DocumentId == documentId && x.UserId == userId);
     }
 
-    public async Task<Reviewer?> GetReviewerAsync(Guid documentId, Guid ownerId)
+    public async Task<Reviewer?> GetReviewerAsync(Guid documentId, Guid userId)
     {
-        return await _dbContext.Reviewers.FirstOrDefaultAsync(x => x.DocumentId == documentId && x.UserId == ownerId);
+        return await _dbContext.Reviewers.FirstOrDefaultAsync(x => x.DocumentId == documentId && x.UserId == userId);
     }
 
     public async Task<List<Reviewer>> GetReviewersAsync(Guid documentId)
@@ -65,6 +66,12 @@ public class DocumentRepository(ApplicationDbContext dbContext) :IDocumentReposi
         await _dbContext.SaveChangesAsync();
     }
 
+    public async Task RemoveReviewerAsync(Reviewer reviewer)
+    {
+        _dbContext.Reviewers.Remove(reviewer);
+        await _dbContext.SaveChangesAsync();
+    }
+
     public async Task RemoveReviewersAsync(Guid documentId)
     {
         var reviewers = _dbContext.Reviewers.Where(x => x.DocumentId == documentId);
@@ -74,8 +81,40 @@ public class DocumentRepository(ApplicationDbContext dbContext) :IDocumentReposi
 
     public async Task DeleteAsync(Guid documentId)
     {
-        var document = await dbContext.Documents.FirstOrDefaultAsync(x => x.Id == documentId);
+        var document = await _dbContext.Documents.FirstOrDefaultAsync(x => x.Id == documentId);
         if (document != null) _dbContext.Documents.Remove(document);
+        await _dbContext.SaveChangesAsync();
+    }
+
+    public async Task AddCommentAsync(Comment comment)
+    { 
+        await _dbContext.Comments.AddAsync(comment);
+        await _dbContext.SaveChangesAsync();
+    }
+
+    public async Task<List<Comment>> GetAllCommentsAsync(Guid documentId)
+    {
+        return await _dbContext.Comments.Where(x => x.DocumentId == documentId).ToListAsync();
+    }
+
+    public async Task<List<Reviewer>> GetAllReviewersAsync(Guid documentId)
+    {
+        return await _dbContext.Reviewers.Where(x => x.DocumentId == documentId).ToListAsync();
+    }
+
+    public async Task<Comment?> GetCommentAsync(Guid documentId, Guid reviewerId)
+    {
+        return await _dbContext.Comments.FirstOrDefaultAsync(x => x.DocumentId == documentId && x.ReviewerId == reviewerId);
+    }
+
+    public async Task<Comment?> GetCommentByIdAsync(Guid commentId)
+    {
+        return await _dbContext.Comments.FirstOrDefaultAsync(x => x.Id == commentId);
+    }
+
+    public async Task DeleteCommentAsync(Comment comment)
+    {
+        _dbContext.Comments.Remove(comment);
         await _dbContext.SaveChangesAsync();
     }
 }
