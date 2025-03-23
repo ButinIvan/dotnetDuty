@@ -72,3 +72,13 @@ export const getUserDocuments = async () => {
         }
     }
 };
+
+export const getDocument = async (documentId) => {
+    try {
+        const response = await api.get(`/documents/${documentId}`);
+        return response.data;
+    } catch (err) {
+        console.error('Ошибка при загрузке документа:', err);
+        throw err;
+    }
+};

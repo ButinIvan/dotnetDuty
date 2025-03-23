@@ -52,10 +52,17 @@ namespace dotnetWebApi.Controllers
                 HttpOnly = true,
                 Secure = false,
                 SameSite = SameSiteMode.Lax,
-                Expires = DateTime.UtcNow.AddHours(24)
+                Expires = DateTime.UtcNow.AddHours(2)
             });
             
             return Ok(new { message = "Login successful", token });
+        }
+        
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            Response.Cookies.Delete("AuthCookie");
+            return Ok(new { message = "Logout successful." });
         }
     }
 }

@@ -57,18 +57,18 @@
   frontend:
     image: frontend-app
     build:
-      context: ./frontend # Укажите путь к папке с вашим React-приложением
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: frontend
     restart: always
     depends_on:
-      - dotnetWebApi # Зависит от .NET API
+      - dotnetWebApi 
     ports:
-      - "3000:80" # Порт для доступа
+      - "3000:80" 
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=production 
     volumes:
-      - ./frontend:/app # Монтируем код для live-отладки (опционально)
+      - ./frontend:/app
   
 volumes:
   db_data:

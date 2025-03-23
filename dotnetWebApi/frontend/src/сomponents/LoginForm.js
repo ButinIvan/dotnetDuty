@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../AuthContext'; // Импортируем useAuth
 import { login } from '../api';
 
 const LoginForm = () => {
@@ -7,17 +8,18 @@ const LoginForm = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const navigate = useNavigate();
+    const { login: authLogin } = useAuth(); // Получаем функцию login из контекста
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             const response = await login(username, password);
             if (response.token) {
-                localStorage.setItem('token', response.token); // Сохраняем токен
-                navigate('/documents'); // Переходим в личный кабинет
+                authLogin(response.token); // Обновляем состояние аутентификации
+                navigate('/profile'); // Переходим в личный кабинет
             }
         } catch (err) {
-            setError(err.message || 'Неверное имя пользователя или пароль');
+            setError('Неверное имя пользователя или пароль');
         }
     };
 

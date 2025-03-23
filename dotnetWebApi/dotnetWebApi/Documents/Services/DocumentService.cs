@@ -4,9 +4,8 @@ using dotnetWebApi.Interfaces;
 
 namespace dotnetWebApi.Documents.Services;
 
-public class DocumentService(IAccountRepository accountRepository, IDocumentRepository documentRepository, IS3Repository s3Repository)
+public class DocumentService(IDocumentRepository documentRepository, IS3Repository s3Repository)
 {
-    private readonly IAccountRepository _accountRepository = accountRepository;
     private readonly IDocumentRepository _documentRepository = documentRepository;
     private readonly IS3Repository _s3Repository = s3Repository;
 
@@ -60,42 +59,6 @@ public class DocumentService(IAccountRepository accountRepository, IDocumentRepo
         }
     }
 
-    public async Task<string> GetUserRoleAsync(Guid documentId, Guid userId)
-    {
-        var document = await _documentRepository.GetByIdAsync(documentId);
-        if (document == null) return "User";
-
-        if (document.OwnerId == userId) return "Owner";
-        var role = await _documentRepository.GetUserRoleAsync(documentId, userId);
-        return role ?? "User";
-    }
-
-    public async Task<(bool Success, object? NewReviewer, string Message)> AddReviewerAsync(Guid documentId,
-        Guid ownerId, string userName, string role = "Reviewer")
-    {
-        var document = await _documentRepository.GetByIdAsync(documentId);
-        if (document == null) return (false, null, "Document not found");
-
-        if (document.OwnerId != ownerId) return (false, null, "Access denied");
-
-        var user = await _accountRepository.GetByUserNameAsync(userName);
-        if (user == null) return (false, null, "User not found");
-
-        var isReviewer = await _documentRepository.GetReviewerAsync(documentId, user.Id);
-        if (isReviewer != null) return (false, null, "User is already reviewer");
-        
-        await _documentRepository.AddReviewerAsync(documentId, user.Id, role);
-
-        var newReviewer = new
-        {
-            ReviewerId = user.Id,
-            ReviewerUsername = user.UserName,
-            ReviewerRole = role
-        };
-
-        return (true, newReviewer, "New Reviewer has been added");
-    }
-
     public async Task<(bool Success, string Message)> UpdateDocumentSettingsAsync(Guid documentId, Guid userId, UpdateDocumentSettingsRequest request)
     {
         var document = await _documentRepository.GetByIdAsync(documentId);
@@ -110,7 +73,22 @@ public class DocumentService(IAccountRepository accountRepository, IDocumentRepo
 
         return (true, "Document updated");
     }
-    
+
+    public async Task<(bool Success, string Message)> EditDocumentAsync(Guid userId, Guid documentId, string content)
+    {
+        var document = await _documentRepository.GetByIdAsync(documentId);
+        if (document == null) return (false, "Document not found");
+
+        if (document.OwnerId != userId) return (false, "Access denied");
+        if (document.IsFinished) return (false, "Document is finished, you can't edit this document");
+        
+        var newS3Path = await _s3Repository.UploadDocumentAsync(userId, content);
+        await _s3Repository.DeleteDocumentAsync(document.S3Path);
+        document.UpdateS3Path(newS3Path);
+        document.UpdateLastEdited();
+        await _documentRepository.UpdateAsync(document);
+        return (true, "Document updated");
+    }
     public async Task<(bool Success, string Message)> DeleteDocumentAsync(Guid documentId, Guid userId)
     {
         var document = await _documentRepository.GetByIdAsync(documentId);
