@@ -10,11 +10,13 @@ namespace dotnetWebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    // Use interfaces instead of implementations to comply with DI (dependency inversion) principle
     public class AuthController(AccountService accountService, AuthService authService) : ControllerBase
     {
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterUserRequest request)
         {
+            // Validation and result mapping are better off being also wrapped into separate services
             if (string.IsNullOrWhiteSpace(request.UserName) ||
                 string.IsNullOrWhiteSpace(request.FirstName) ||
                 string.IsNullOrWhiteSpace(request.Password))

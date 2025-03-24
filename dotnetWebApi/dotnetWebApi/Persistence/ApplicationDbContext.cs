@@ -20,6 +20,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<User>(entity =>
         {
             entity.ToTable("Users");
+            // Id is considered a key by default
             entity.HasKey(u => u.Id);
             entity.Property(u => u.Id).HasDefaultValueSql("gen_random_uuid()");
 
@@ -27,15 +28,18 @@ public class ApplicationDbContext : DbContext
                 .IsRequired()
                 .HasMaxLength(256);
 
+            // I'm not 100% sure, but I believe that IsRequired can be replaced by just using the required c# keyword
             entity.Property(u => u.FirstName).IsRequired();
             entity.Property(u => u.Role).IsRequired();
             entity.Property(u => u.PasswordHash).IsRequired();
 
+            // As mentioned in one of the entities, you don't have to do this if you mark property as virtual
             entity.HasMany(u => u.OwnedDocuments)
                 .WithOne(d => d.Owner)
                 .HasForeignKey(d => d.OwnerId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Same comments apply to other entities
         });
 
         modelBuilder.Entity<Document>(entity =>
