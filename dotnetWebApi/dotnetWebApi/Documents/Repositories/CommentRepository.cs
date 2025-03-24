@@ -42,4 +42,23 @@ public class CommentRepository(ApplicationDbContext dbContext) :ICommentReposito
         _dbContext.Comments.Remove(comment);
         await _dbContext.SaveChangesAsync();
     }
+    
+    public async Task AddReplyAsync(Guid parentCommentId, Comment reply)
+    {
+        reply.SetParentComment(parentCommentId);
+        await _dbContext.Comments.AddAsync(reply);
+        await _dbContext.SaveChangesAsync();
+    }
+
+    public async Task<List<Comment>> GetRepliesAsync(Guid parentCommentId)
+    {
+        return await _dbContext.Comments
+            .Where(c => c.ParentCommentId == parentCommentId)
+            .ToListAsync();
+    }
+
+    public async Task<bool> IsReplyAsync(Guid commentId)
+    {
+        return await _dbContext.Comments.Where(x => x.Id == commentId).AnyAsync(x => x.ParentCommentId != null);
+    }
 }

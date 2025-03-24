@@ -6,6 +6,7 @@ public class Document
     public string Title { get; private set; }
     public Guid OwnerId { get; private set; }
     public bool IsFinished { get; private set; }
+    public bool IsCommentBranchFinished { get; private set; }
     public bool IsClosedToComment { get; private set; }
     public DateTime LastModified { get; private set; }
     public string S3Path { get; private set; }
@@ -24,6 +25,7 @@ public class Document
         Title = title;
         OwnerId = ownerId;
         IsFinished = false;
+        IsCommentBranchFinished = false;
         IsClosedToComment = true;
         LastModified = DateTime.UtcNow;
         S3Path = s3Path;
@@ -44,21 +46,15 @@ public class Document
     {
         IsFinished = isFinished;
     }
+
+    public void SetCommentBranchFinished(bool isCommentBranchFinished)
+    {
+        IsCommentBranchFinished = isCommentBranchFinished;
+    }
     
     public void UpdateS3Path(string newS3Path)
     {
         S3Path = newS3Path;
-        LastModified = DateTime.UtcNow;
-    }
-    
-    public void AddComment(Comment comment)
-    {
-        if (IsClosedToComment)
-        {
-            throw new InvalidOperationException("Комментарии к этому документу закрыты.");
-        }
-
-        Comments.Add(comment);
         LastModified = DateTime.UtcNow;
     }
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using dotnetWebApi.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
 namespace dotnetWebApi.Persistence;
@@ -7,8 +8,9 @@ public class ApplicationDbContextFactory : IDesignTimeDbContextFactory<Applicati
 {
     public ApplicationDbContext CreateDbContext(string[] args)
     {
+        var envService = new EnvService();
         var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
-        optionsBuilder.UseNpgsql("Host=localhost;Database=dotnetDuty;Username=postgres;Password=1");
+        optionsBuilder.UseNpgsql(envService.GetVariable("CONNECTION_STRING"));
         
         return new ApplicationDbContext(optionsBuilder.Options);
     }

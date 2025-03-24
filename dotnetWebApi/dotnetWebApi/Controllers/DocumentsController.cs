@@ -201,4 +201,40 @@ public class DocumentsController : ControllerBase
         if (!success) return BadRequest(message);
         return Ok("Comments removed");
     }
+
+    [HttpPost("{documentId}/comments/{commentId}/replies")]
+    public async Task<IActionResult> AddReply(Guid documentId, Guid commentId, [FromBody] AddCommentRequest request)
+    {
+        var userId = this.GetUserId();
+        var (success, message) = await _documentService.AddReplyToTheCommentAsync(documentId, userId, commentId, request.Comment);
+        if (!success) return BadRequest(message);
+        return Ok("Reply added");
+    }
+
+    [HttpGet("{documentId}/comments/{commentId}/replies")]
+    public async Task<IActionResult> GetRepliesToTheComment(Guid documentId, Guid commentId)
+    {
+        var userId = this.GetUserId();
+        var (success, message, replies) = await _documentService.GetAllRepliesAsync(documentId, commentId, userId);
+        if (!success) return BadRequest(message);
+        return Ok(replies);
+    }
+
+    [HttpDelete("{documentId}/comments/{commentId}/replies")]
+    public async Task<IActionResult> RemoveReply(Guid documentId, Guid commentId)
+    {
+        var userId = this.GetUserId();
+        var (success, message) = await _documentService.DeleteCommentAsync(documentId, userId, commentId);
+        if (!success) return BadRequest(message);
+        return Ok("Reply removed");
+    }
+
+    [HttpPut("{documentId}/comments")]
+    public async Task<IActionResult> UpdateCommentBranchAvailability(Guid documentId, UpdateDocumentSettingsRequest request)
+    {
+        var userId = this.GetUserId();
+        var (success, message) = await _documentService.UpdateDocumentCommentsSettingsAsync(documentId, userId, request);
+        if (!success) return BadRequest(message);
+        return Ok("Updated");
+    }
 }

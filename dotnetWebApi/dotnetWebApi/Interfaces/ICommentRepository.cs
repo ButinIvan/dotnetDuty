@@ -10,4 +10,7 @@ public interface ICommentRepository
     Task DeleteAllReviewerCommentsAsync(Guid reviewerId);
     Task<Comment?> GetCommentByIdAsync(Guid commentId);
     Task DeleteCommentAsync(Comment comment);
+    Task AddReplyAsync(Guid parentCommentId, Comment comment);
+    Task<List<Comment>> GetRepliesAsync(Guid parentCommentId);
+    Task<bool> IsReplyAsync(Guid commentId);
 }

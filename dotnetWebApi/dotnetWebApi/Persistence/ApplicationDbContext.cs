@@ -71,6 +71,7 @@ public class ApplicationDbContext : DbContext
             entity.ToTable("Comments");
             entity.HasKey(d => d.Id);
             entity.Property(d => d.Id).HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(c => c.ParentCommentId).HasColumnName("ParentCommentId").IsRequired(false);
             
             entity.HasOne(x => x.Document)
                 .WithMany(x => x.Comments)
@@ -81,6 +82,14 @@ public class ApplicationDbContext : DbContext
                 .WithMany(x => x.Comments)
                 .HasForeignKey(x => x.ReviewerId)
                 .OnDelete(DeleteBehavior.Restrict);
+            
+            entity.HasOne(x => x.ParentComment)
+                .WithMany(x => x.Replies)
+                .HasForeignKey(x => x.ParentCommentId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+            
+            entity.HasIndex(x => x.ParentCommentId);
         });
     }
 }

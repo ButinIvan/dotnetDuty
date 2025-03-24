@@ -55,7 +55,7 @@ public class DocumentService(IDocumentRepository documentRepository, IAccountRep
 
         var reviewerRole = await _documentRepository.GetUserRoleAsync(documentId, userId);
 
-        if (reviewerRole == null) return (false, "Access denied", "", "User");
+        if (reviewerRole == null) return (true, "Accessed on", "", "User");
         {
             var content = await _s3Repository.DownloadDocumentAsync(document.S3Path);
             return (true, "Reviewer accessed on.", content, reviewerRole);
@@ -69,12 +69,24 @@ public class DocumentService(IDocumentRepository documentRepository, IAccountRep
 
         if (document.OwnerId != userId) return (false, "Access denied");
         
-        document.UpdateTitle(request.Title);
         document.SetFinished(request.IsFinished);
 
         await _documentRepository.UpdateAsync(document);
 
         return (true, "Document updated");
+    }
+
+    public async Task<(bool Success, string Message)> UpdateDocumentCommentsSettingsAsync(Guid documentId, Guid userId, UpdateDocumentSettingsRequest request)
+    {
+        var document = await _documentRepository.GetByIdAsync(documentId);
+        if (document == null) return (false, "Document not found");
+
+        var isReviewer = await _documentRepository.IsReviewerAsync(documentId, userId);
+        if (document.OwnerId != userId && !isReviewer) return (false, "Access denied");
+
+        document.SetCommentBranchFinished(request.IsFinished);
+        await _documentRepository.UpdateAsync(document);
+        return (true, "Document comment settings updated");
     }
 
     public async Task<(bool Success, string Message)> EditDocumentAsync(Guid userId, Guid documentId, string content)
@@ -176,10 +188,13 @@ public class DocumentService(IDocumentRepository documentRepository, IAccountRep
         
         var s3Path = await _s3Repository.UploadDocumentAsync(userId, content);
         
-        var isReviewer = await _documentRepository.IsReviewerAsync(documentId, userId);
-        if (document.OwnerId != userId && isReviewer != true) return (false, "Access denied");
+        
         var reviewer = await _documentRepository.GetReviewerAsync(documentId, userId);
         if (reviewer == null) return (false, "No such reviewer");
+        
+        var isReviewer = await _documentRepository.IsReviewerAsync(documentId, userId);
+        if (document.OwnerId != userId && !isReviewer) return (false, "Access denied");
+        if (reviewer.Role == "Reviewer" && document.IsCommentBranchFinished) return (false, "Comment branch is closed");
 
         var comment = new Comment(documentId, reviewer.Id, s3Path);
         await _commentRepository.AddCommentAsync(comment);
@@ -198,7 +213,6 @@ public class DocumentService(IDocumentRepository documentRepository, IAccountRep
     {
         var document = await _documentRepository.GetByIdAsync(documentId);
         if (document == null) return (false, "Document not found", []);
-        if (document.OwnerId != ownerId) return (false, "Access denied", []);
         
         var comments = await _commentRepository.GetAllCommentsAsync(documentId);
         var commentsIds = comments.Select(c => c.Id).ToList();
@@ -211,10 +225,14 @@ public class DocumentService(IDocumentRepository documentRepository, IAccountRep
         var document = await _documentRepository.GetByIdAsync(documentId);
         if (document == null) return (false, "Document not found");
         
+        var comment = await _commentRepository.GetCommentByIdAsync(commentId);
+        if (comment == null) return (false, "Comment not found");
+        
+        var isReply = await _commentRepository.IsReplyAsync(commentId);
+        if (!isReply) return (false, "Comment is not a reply");
+        
         if (document.OwnerId != userId) return (false, "Access denied");
         
-        var comment = await _commentRepository.GetCommentByIdAsync(commentId);
-        if (comment == null) return (false, "Comment has been deleted");
         await _s3Repository.DeleteAsync(comment.S3Path);
         await _commentRepository.DeleteCommentAsync(comment);
         return (true, "Comment has been deleted");
@@ -288,7 +306,44 @@ public class DocumentService(IDocumentRepository documentRepository, IAccountRep
             if (role == "Reviewer") documentsIds.Add(document.Id);
         }
         
-        if (documentsIds.Count == 0) return (false, "You don't have any review assignments", []);
-        return (true, "Review assignments has been found", documentsIds);
+        return documentsIds.Count == 0 
+            ? (false, "You don't have any review assignments", []) 
+            : (true, "Review assignments has been found", documentsIds);
+    }
+
+    public async Task<(bool Success, string Message)> AddReplyToTheCommentAsync(Guid documentId, Guid userId, Guid parentCommentId, string content)
+    {
+        var document = await _documentRepository.GetByIdAsync(documentId);
+        if (document == null) return (false, "Document not found");
+
+        var parentComment = await _commentRepository.GetCommentByIdAsync(parentCommentId);
+        if (parentComment == null) return (false, "Parent comment not found");
+        
+        var reviewer = await _documentRepository.GetReviewerAsync(documentId, userId);
+        if (reviewer == null) return (false, "Reviewer not found");
+        
+        if (document.OwnerId != userId) return (false, "Access denied");
+
+        if (document.IsCommentBranchFinished && reviewer.Role == "Reviewer") return (false, "Comment branch is closed");
+        
+        var s3Path = await _s3Repository.UploadDocumentAsync(userId, content);
+
+        var reply = new Comment(documentId, reviewer.Id, s3Path, parentCommentId);
+        
+        await _commentRepository.AddReplyAsync(parentCommentId, reply);
+        return (true, "Comment has been added");
+    }
+
+    public async Task<(bool Success, string Message, List<Guid> Replies)> GetAllRepliesAsync(Guid documentId, Guid parentCommentId, Guid userId)
+    {
+        var document = await _documentRepository.GetByIdAsync(documentId);
+        if (document == null) return (false, "Document not found", []);
+        
+        var parentComment = await _commentRepository.GetCommentByIdAsync(parentCommentId);
+        if (parentComment == null) return (false, "Parent comment not found", []);
+        
+        var replies = await _commentRepository.GetRepliesAsync(parentCommentId);
+        var repliesIds = replies.Select(x => x.Id).ToList();
+        return (true, "Replies has been added", repliesIds);
     }
 }
