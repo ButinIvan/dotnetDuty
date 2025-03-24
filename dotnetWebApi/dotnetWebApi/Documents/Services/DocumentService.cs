@@ -7,17 +7,22 @@ namespace dotnetWebApi.Documents.Services;
 
 public class DocumentService(IDocumentRepository documentRepository, IAccountRepository accountRepository, IS3Repository s3Repository, ICommentRepository commentRepository)
 {
+    // Here and everywhere else where primary constructors are used, it's redundant to duplicate fields,
+    // you could just use parameters from the constructor, documentRepository, etc.
     private readonly IDocumentRepository _documentRepository = documentRepository;
     private readonly IAccountRepository _accountRepository = accountRepository;
     private readonly IS3Repository _s3Repository = s3Repository;
     private readonly ICommentRepository _commentRepository = commentRepository;
 
+    // Here and everywhere else,
+    // it's better to specify object models to wrap inputs and outputs with relevant names to improve readability.
     public async Task<(bool Success, string Message, Guid? DocumentId)> CreateDocumentAsync(Guid userId, string title,
         string content)
     {
         if (string.IsNullOrEmpty(title)) return (false, "Title can not be empty", null);
 
         var s3Path = await _s3Repository.UploadDocumentAsync(userId, content);
+        // Last() and First() could throw errors, no handling of this
         var documentName = s3Path.Split("/").Last().Split('.').First();
         var documentId = Guid.Parse(documentName);
         
@@ -346,4 +351,6 @@ public class DocumentService(IDocumentRepository documentRepository, IAccountRep
         var repliesIds = replies.Select(x => x.Id).ToList();
         return (true, "Replies has been added", repliesIds);
     }
+    
+    // Too big file overall, splitting things by features would help that
 }

@@ -25,6 +25,8 @@ public class AuthService(string issuer, string audience, string secretKey)
             signingCredentials: new SigningCredentials(
                 new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
                 SecurityAlgorithms.HmacSha256));
+        
+        // This also could've been injected instead of creating in-place
         return new JwtSecurityTokenHandler().WriteToken(jwtToken);
     }
 }

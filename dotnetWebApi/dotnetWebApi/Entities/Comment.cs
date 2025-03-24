@@ -9,6 +9,7 @@ public class Comment
     public string S3Path { get; private set; }
     public DateTime LastModified { get; private set; }
     
+    // Could use "virtual" keyword here to establish one-to-many 
     public Document Document { get; private set; }
     public Reviewer Reviewer { get; private set; }
     public Comment? ParentComment { get; private set; }
