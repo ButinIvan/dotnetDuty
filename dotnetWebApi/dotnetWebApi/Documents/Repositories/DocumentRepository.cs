@@ -49,11 +49,6 @@ public class DocumentRepository(ApplicationDbContext dbContext) :IDocumentReposi
         return await _dbContext.Reviewers.Where(x => x.DocumentId == documentId).ToListAsync();
     }
 
-    public async Task<IEnumerable<Document>> GetByOwnerIdAsync(Guid ownerId)
-    {
-        return await _dbContext.Documents.Where(x => x.OwnerId == ownerId).ToListAsync();
-    }
-
     public async Task AddAsync(Document document)
     {
         await _dbContext.Documents.AddAsync(document);
@@ -86,35 +81,8 @@ public class DocumentRepository(ApplicationDbContext dbContext) :IDocumentReposi
         await _dbContext.SaveChangesAsync();
     }
 
-    public async Task AddCommentAsync(Comment comment)
-    { 
-        await _dbContext.Comments.AddAsync(comment);
-        await _dbContext.SaveChangesAsync();
-    }
-
-    public async Task<List<Comment>> GetAllCommentsAsync(Guid documentId)
+    public async Task<List<Document>> GetAllReviewAssignedDocumentsAsync(Guid userId)
     {
-        return await _dbContext.Comments.Where(x => x.DocumentId == documentId).ToListAsync();
-    }
-
-    public async Task<List<Reviewer>> GetAllReviewersAsync(Guid documentId)
-    {
-        return await _dbContext.Reviewers.Where(x => x.DocumentId == documentId).ToListAsync();
-    }
-
-    public async Task<Comment?> GetCommentAsync(Guid documentId, Guid reviewerId)
-    {
-        return await _dbContext.Comments.FirstOrDefaultAsync(x => x.DocumentId == documentId && x.ReviewerId == reviewerId);
-    }
-
-    public async Task<Comment?> GetCommentByIdAsync(Guid commentId)
-    {
-        return await _dbContext.Comments.FirstOrDefaultAsync(x => x.Id == commentId);
-    }
-
-    public async Task DeleteCommentAsync(Comment comment)
-    {
-        _dbContext.Comments.Remove(comment);
-        await _dbContext.SaveChangesAsync();
+        return await _dbContext.Documents.Where(x => x.Reviewers.Any(y => y.UserId == userId)).ToListAsync();
     }
 }

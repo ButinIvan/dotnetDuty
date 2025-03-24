@@ -2,6 +2,7 @@ using dotnetWebApi.AuthUsers;
 using dotnetWebApi.AuthUsers.Models;
 using dotnetWebApi.AuthUsers.Services;
 using dotnetWebApi.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
@@ -28,10 +29,15 @@ namespace dotnetWebApi.Controllers
 
             return Ok(new { message = "User successfully registered" });
         }
-
+        
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
         {
+            if (HttpContext.User.Identity?.IsAuthenticated == true)
+            {
+                return BadRequest(new { message = "You are already logged in." });
+            }
+            
             if (string.IsNullOrWhiteSpace(loginRequest.UserName) || string.IsNullOrWhiteSpace(loginRequest.Password))
             {
                 return BadRequest(new { message = "Both username and password are required." });
@@ -58,6 +64,7 @@ namespace dotnetWebApi.Controllers
             return Ok(new { message = "Login successful" });
         }
         
+        [Authorize]
         [HttpPost("logout")]
         public IActionResult Logout()
         {

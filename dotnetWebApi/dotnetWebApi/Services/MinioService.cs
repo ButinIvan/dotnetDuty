@@ -78,22 +78,6 @@ public class MinioService :IS3Repository
         return objectName;
     }
 
-    public async Task<string?> GetDocumentAsync(Guid userId, string documentName)
-    {
-        var objectName = $"{userId}/{documentName}";
-        using var memoryStream = new MemoryStream();
-        var args = new GetObjectArgs()
-            .WithBucket(_bucketName)
-            .WithObject(objectName)
-            .WithCallbackStream(async stream =>
-            {
-                await stream.CopyToAsync(memoryStream);
-                memoryStream.Seek(0, SeekOrigin.Begin);
-            });
-        await _minioClient.GetObjectAsync(args);
-        return Encoding.UTF8.GetString(memoryStream.ToArray());
-    }
-
     public async Task<string> DownloadDocumentAsync(string s3Path)
     {
         using var memoryStream = new MemoryStream();
@@ -109,16 +93,7 @@ public class MinioService :IS3Repository
         return Encoding.UTF8.GetString(memoryStream.ToArray());
     }
 
-    public async Task DeleteDocumentAsync(Guid userId, string documentName)
-    {
-        var objectName = $"{userId}/{documentName}";
-        var args = new RemoveObjectArgs()
-            .WithBucket(_bucketName)
-            .WithObject(objectName);
-        await _minioClient.RemoveObjectAsync(args);
-    }
-
-    public async Task DeleteDocumentAsync(string s3Path)
+    public async Task DeleteAsync(string s3Path)
     {
         var objectName = $"{s3Path}";
         var args = new RemoveObjectArgs()

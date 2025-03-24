@@ -64,6 +64,15 @@ public class DocumentsController : ControllerBase
         return Ok(documents);
     }
 
+    [HttpGet("reviewAssignments")]
+    public async Task<IActionResult> GetReviewAssignDocuments()
+    {
+        var userId = this.GetUserId();
+        var (success, message, content) = await _documentService.GetAllReviewAssignmentDocumentsAsync(userId);
+        if (!success) return BadRequest(message);
+        return Ok(content);
+    }
+
     [HttpPut("{documentId}/settings")]
     public async Task<IActionResult> UpdateDocumentSettings(Guid documentId,
         [FromBody] UpdateDocumentSettingsRequest request)
@@ -98,30 +107,32 @@ public class DocumentsController : ControllerBase
     }
 
     [HttpPost("{documentId}/reviewers")]
-    public async Task<IActionResult> AddReviewer(Guid documentId, [FromBody] AddReviewerRequest request)
+    public async Task<IActionResult> AddReviewer(Guid documentId, string userName)
     {
         var userId = this.GetUserId();
         
-        var (success, reviewer, message) = await _documentService.AddReviewerAsync(documentId, userId, request.userName);
+        var (success, addedReviewerUserId, message) = await _documentService.AddReviewerAsync(documentId, userId, userName);
         
         if (!success) return BadRequest(message);
 
-        return Ok(reviewer);
+        return Ok($"Added to reviewers user with id: {addedReviewerUserId}");
     }
 
     [HttpGet("{documentId}/reviewers")]
     public async Task<IActionResult> GetReviewers(Guid documentId)
     {
-        var reviewers = await _documentService.GetAllReviewersAsync(documentId);
+        var userId = this.GetUserId();
+        var (success, message, reviewers) = await _documentService.GetAllReviewersAsync(userId, documentId);
+        if (!success) return BadRequest(message);
         return Ok(reviewers);
     }
 
-    [HttpDelete("{documentId}/reviewers/{userId}")]
-    public async Task<IActionResult> RemoveReviewer(Guid documentId, Guid userId)
+    [HttpDelete("{documentId}/reviewers/{userName}")]
+    public async Task<IActionResult> RemoveReviewer(Guid documentId, string userName)
     {
         var ownerId = this.GetUserId();
         
-        var (success, message) = await _documentService.DeleteReviewerAsync(documentId, ownerId, userId);
+        var (success, message) = await _documentService.DeleteReviewerAsync(documentId, ownerId, userName);
         if (!success) return BadRequest(message);
         return Ok("Reviewer removed");
     }
@@ -136,10 +147,20 @@ public class DocumentsController : ControllerBase
         return Ok("Comment added");
     }
 
+    [HttpGet("{documentId}/comments/{commentId}")]
+    public async Task<IActionResult> GetComment(Guid commentId)
+    {
+        var (success, message, content) = await _documentService.GetCommentAsync(commentId);
+        if (!success) return BadRequest(message);
+        return Ok(content);
+    }
+
     [HttpGet("{documentId}/comments")]
     public async Task<IActionResult> GetAllDocumentComments(Guid documentId)
     {
-        var comments = await _documentService.GetAllCommentsAsync(documentId);
+        var userId = this.GetUserId();
+        var (success, message, comments) = await _documentService.GetAllCommentsAsync(userId, documentId);
+        if (!success) return BadRequest(message);
         return Ok(comments);
     }
 
@@ -151,5 +172,33 @@ public class DocumentsController : ControllerBase
         var (success, message) = await _documentService.DeleteCommentAsync(documentId, userId, commentId);
         if (!success) return BadRequest(message);
         return Ok("Comment removed");
+    }
+
+    [HttpDelete("{documentId}/comments/")]
+    public async Task<IActionResult> RemoveAllComments(Guid documentId)
+    {
+        var ownerId = this.GetUserId();
+        var (success, message) = await _documentService.DeleteAllCommentsAsync(documentId, ownerId);
+        if (!success) return BadRequest(message);
+        return Ok("Comments removed");
+    }
+
+    [HttpGet("{documentId}/comments/user/{userName}")]
+    public async Task<IActionResult> GetAllReviewerComments(Guid documentId, string userName)
+    {
+        var userId = this.GetUserId();
+        var (success, message, content) = await _documentService.GetAllReviewerCommentsAsync(userId, documentId, userName);
+        if (!success) return BadRequest(message);
+        return Ok(content);
+    }
+
+    [HttpDelete("{documentId}/comments/user/{userName}")]
+    public async Task<IActionResult> RemoveAllReviewerComments(Guid documentId, string userName)
+    {
+        var userId = this.GetUserId();
+
+        var (success, message) = await _documentService.DeleteAllReviewerCommentsAsync(userId, documentId, userName);
+        if (!success) return BadRequest(message);
+        return Ok("Comments removed");
     }
 }

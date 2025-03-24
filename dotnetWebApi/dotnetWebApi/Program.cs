@@ -108,6 +108,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(o => o.UseNpgsql(connectionS
 
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
+builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<IS3Repository>(options =>
 {
     var envvService = options.GetRequiredService<EnvService>();
