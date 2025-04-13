@@ -1,6 +1,7 @@
 using dotnetWebApi.AuthUsers;
 using dotnetWebApi.AuthUsers.Models;
 using dotnetWebApi.AuthUsers.Services;
+using dotnetWebApi.Interfaces;
 using dotnetWebApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +11,7 @@ namespace dotnetWebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthController(AccountService accountService, AuthService authService) : ControllerBase
+    public class AuthController(IAccountService accountService, AuthService authService) : ControllerBase
     {
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterUserRequest request)

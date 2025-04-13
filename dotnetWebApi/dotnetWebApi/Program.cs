@@ -91,7 +91,7 @@ builder.Services.AddAuthentication("Bearer")
     });
 
 
-builder.Services.AddScoped<AccountService>();
+builder.Services.AddScoped<IAccountService, AccountService>();
 
 builder.Services.AddSingleton<AuthService>(o =>
 {
@@ -106,6 +106,7 @@ builder.Services.AddScoped<DocumentService>();
 var connectionString = envService.GetVariable("CONNECTION_STRING");
 builder.Services.AddDbContext<ApplicationDbContext>(o => o.UseNpgsql(connectionString));
 
+builder.Services.AddScoped<IPasswordHasher, PasswordHashService>();
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
